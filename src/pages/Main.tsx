@@ -1,10 +1,12 @@
 import { ChangeEvent, useCallback, useState } from "react";
-import { FaGithub, FaPlus } from "react-icons/fa";
+import { FaGithub, FaPlus, FaSpinner } from "react-icons/fa";
 import api from "../services/api";
+import { sleep } from "../helpers/sleep";
 
 const Main = () => {
   const [newRepo, setNewRepo] = useState<string>();
   const [repositories, setRepositories] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     setNewRepo(e.target?.value);
@@ -15,12 +17,16 @@ const Main = () => {
       e.preventDefault();
 
       try {
+        setIsLoading(true);
+        await sleep(5000);
         const response = await api.get(`/repos/${newRepo}`);
 
         setRepositories([...repositories, response.data.full_name]);
         setNewRepo("");
       } catch (error) {
         console.log(error);
+      } finally {
+        setIsLoading(false);
       }
 
       console.log(repositories);
@@ -49,8 +55,16 @@ const Main = () => {
           onChange={(e) => handleInputChange(e)}
         />
 
-        <button type="submit" className="bg-[#0D2636] p-2 border rounded-sm">
-          <FaPlus color="#FFF" size={20} />
+        <button
+          type="submit"
+          className="bg-[#0D2636] disabled:bg-gray-300 p-2 border rounded-sm disabled:cursor-not-allowed"
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <FaSpinner color="#FFF" size={20} className="animate-spin" />
+          ) : (
+            <FaPlus color="#FFF" size={20} />
+          )}
         </button>
       </form>
     </div>
